@@ -1,73 +1,96 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="200" alt="Nest Logo" /></a>
-</p>
+# YouTube Video Sharing App
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+This is a web application for sharing YouTube videos with real-time notifications.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Features
 
-## Description
+- User registration and login
+- Sharing YouTube videos
+- Viewing a list of shared videos
+- Real-time notifications for new video shares
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Technologies Used
 
-## Installation
+- Backend: NestJS (Node.js framework)
+- Frontend: React
+- Database: PostgreSQL
+- Caching: Redis
+- Real-time notifications: WebSockets
+- Containerization: Docker
 
-```bash
-$ pnpm install
+## Prerequisites
+
+- Docker
+- Docker Compose
+
+## Setup and Running the App
+
+1. Clone the repository:
+
+   ```
+   git clone https://github.com/minhhieple97/video-sharing-app.git
+   cd youtube-video-sharing-app
+   ```
+
+2. Create a `.env` file in the `backend` directory follow `.env.example` and add the following environment variables:
+
+   ```
+   REDIS_HOST=redis
+   REDIS_PORT=6379
+   DATABASE_URL="postgresql://postgres:postgres@postgres:5432/video_sharing"
+   JWT_SECRET=secret
+   ```
+
+3. Build and start the Docker containers:
+
+   ```
+   docker-compose up --build
+   ```
+
+4. The application should now be running. Access it through your web browser:
+   - Frontend: http://localhost:3000
+   - Backend API: http://localhost:5173
+   - Redis GUI: http://localhost:8082
+
+## Running Tests
+
+To run the tests, use the following command:
+
+```
+## Stopping the Application
+
+To stop the application and remove the containers, use:
+
+## Troubleshooting
+
+If you encounter any issues, please try the following steps:
+
+1. Ensure all required ports (3000,5173, 5433, 8082) are available on your machine.
+2. If you've previously run the application, try removing all related containers and volumes:
 ```
 
-## Running the app
+docker-compose down -v
 
-```bash
-# development
-$ pnpm run start
-
-# watch mode
-$ pnpm run start:dev
-
-# production mode
-$ pnpm run start:prod
+```
+3. Rebuild the containers:
 ```
 
-## Test
+docker-compose up --build
 
-```bash
-# unit tests
-$ pnpm run test
-
-# e2e tests
-$ pnpm run test:e2e
-
-# test coverage
-$ pnpm run test:cov
 ```
 
-## Support
+If problems persist, please check the Docker logs for any error messages:
+```
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+docker-compose logs
 
-## Stay in touch
+```
 
-- Author - [Kamil Myśliwiec](https://kamilmysliwiec.com)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+## Contributing
+
+Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct, and the process for submitting pull requests.
 
 ## License
 
-Nest is [MIT licensed](LICENSE).
+This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
+```
