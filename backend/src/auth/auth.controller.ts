@@ -39,7 +39,7 @@ export class AuthController {
       httpOnly: true,
       maxAge: MAX_AGE_JWT_COOKIE,
     });
-    return res.json({ id, email });
+    return res.json({ id, email, token });
   }
   @Post('logout')
   async logout(@Res() res: Response) {
