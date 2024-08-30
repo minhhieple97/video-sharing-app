@@ -3,6 +3,7 @@ import { AuthService } from './auth.service';
 import { Response } from 'express';
 import { RegisterDto } from './dtos/register.dto';
 import { JWT_COOKIE_NAME, MAX_AGE_JWT_COOKIE } from 'src/constants';
+import { LoginDto } from './dtos/login.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -20,5 +21,14 @@ export class AuthController {
       maxAge: MAX_AGE_JWT_COOKIE,
     });
     return res.json({ message: 'User registered successfully' });
+  }
+  @Post('login')
+  async login(@Body() loginDto: LoginDto, @Res() res: Response) {
+    const { id, email, token } = await this.authService.login(loginDto);
+    res.cookie(JWT_COOKIE_NAME, token, {
+      httpOnly: true,
+      maxAge: MAX_AGE_JWT_COOKIE,
+    });
+    return res.json({ id, email });
   }
 }

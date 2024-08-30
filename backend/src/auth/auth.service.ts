@@ -7,6 +7,7 @@ import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
 import { User } from '@prisma/client';
 import * as argon2 from 'argon2';
+import { LoginDto } from './dtos/login.dto';
 
 @Injectable()
 export class AuthService {
@@ -45,5 +46,15 @@ export class AuthService {
       throw new BadRequestException('Password does not match');
     }
     return user;
+  }
+  async login(loginDto: LoginDto) {
+    const { email, password } = loginDto;
+    const user = await this.validateUser(email, password);
+    const token = await this.generateToken({ id: user.id, email: user.email });
+    return {
+      id: user.id,
+      email: user.email,
+      token,
+    };
   }
 }
