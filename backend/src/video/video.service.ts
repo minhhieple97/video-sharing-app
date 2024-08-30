@@ -3,10 +3,14 @@ import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { ShareVideoDto } from './dto/share-video.dto';
 import { getYoutubeVideoId } from 'src/helper';
+import { NotificationGateway } from 'src/notification/notification.gateway';
 
 @Injectable()
 export class VideoService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private notificationGateway: NotificationGateway,
+  ) {}
 
   async shareVideo(shareVideoDto: ShareVideoDto, userId: number) {
     const { youtubeLink } = shareVideoDto;
@@ -20,6 +24,10 @@ export class VideoService {
         sharedBy: userId,
         youtubeId,
       },
+    });
+
+    this.notificationGateway.sendNotification({
+      message: 'New video shared',
     });
 
     return video;
