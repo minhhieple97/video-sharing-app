@@ -31,4 +31,9 @@ export class AuthController {
     });
     return res.json({ id, email });
   }
+  @Post('logout')
+  async logout(@Res() res: Response) {
+    res.clearCookie(JWT_COOKIE_NAME);
+    return res.json({ message: 'User logged out successfully' });
+  }
 }
