@@ -14,6 +14,9 @@ RUN pnpm install
 
 COPY . .
 
+RUN npx prisma generate
+
+
 CMD [ "pnpm", "run", "start:dev" ]
 
 
