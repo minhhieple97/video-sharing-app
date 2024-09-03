@@ -28,6 +28,7 @@ model User {
 model Video {
   id        Int      @id @default(autoincrement())
   youtubeId String   @map("youtube_id")
+  title     String   @map("title") @db.Text 
   sharedBy  Int      @map("shared_by")
   sharedAt  DateTime @default(now()) @map("shared_at")
   user      User     @relation(fields: [sharedBy], references: [id])
