@@ -5,6 +5,8 @@ import {
   UseGuards,
   ValidationPipe,
   Req,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { VideoService } from './video.service';
 import { JwtAuthGuard } from 'src/auth/guards/jwt.guard';
@@ -17,6 +19,7 @@ export class VideoController {
 
   @UseGuards(JwtAuthGuard)
   @Post('share')
+  @HttpCode(HttpStatus.CREATED)
   async shareVideo(
     @Body(ValidationPipe) shareVideoDto: ShareVideoDto,
     @Req() req: IAuthorizedRequest,
