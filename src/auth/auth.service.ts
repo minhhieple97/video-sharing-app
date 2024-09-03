@@ -1,7 +1,8 @@
 import {
   Injectable,
   ConflictException,
-  BadRequestException,
+  NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
@@ -39,11 +40,11 @@ export class AuthService {
       where: { email },
     });
     if (!user) {
-      throw new BadRequestException('User not found');
+      throw new NotFoundException('User not found');
     }
     const isMatch: boolean = await argon2.verify(user.password, password);
     if (!isMatch) {
-      throw new BadRequestException('Password does not match');
+      throw new UnauthorizedException('Password does not match');
     }
     return user;
   }
