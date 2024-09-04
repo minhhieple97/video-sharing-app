@@ -1,6 +1,12 @@
-export interface Notification {
-  message: string;
+import { Socket } from 'socket.io';
+import { JwtTokenPayload } from 'src/auth/interfaces';
+
+export interface SharedVideoNotification {
+  youtubeId: string;
+  email: string;
+  title: string;
 }
-export interface ServerToClientEvents {
-  sendNotification: (notification: Notification) => void;
+
+export interface SocketAuth extends Socket {
+  user: JwtTokenPayload;
 }
