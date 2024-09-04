@@ -34,7 +34,7 @@ export class AuthController {
     );
     const token = await this.authService.generateToken(user);
     res.cookie(JWT_COOKIE_NAME, token, {
-      domain: this.configService.get('DOMAIN'),
+      // domain: this.configService.get('DOMAIN'),
       path: '/',
       httpOnly: true,
       maxAge: MAX_AGE_JWT_COOKIE,
@@ -48,7 +48,7 @@ export class AuthController {
   async login(@Body() loginDto: LoginDto, @Res() res: Response) {
     const { id, email, token } = await this.authService.login(loginDto);
     res.cookie(JWT_COOKIE_NAME, token, {
-      domain: this.configService.get('DOMAIN'),
+      // domain: this.configService.get('DOMAIN'),
       path: '/',
       httpOnly: true,
       maxAge: MAX_AGE_JWT_COOKIE,
