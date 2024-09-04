@@ -1,10 +1,11 @@
 import { checkValidYoutubeLink } from './../helper/index';
-import { Injectable, BadRequestException, Logger } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { ShareVideoDto } from './dto/share-video.dto';
 import { getYoutubeVideoId } from 'src/helper';
 import { NotificationGateway } from 'src/notification/notification.gateway';
 import { YoutubeService } from 'src/youtube/youtube.service';
+import { RedisService } from 'src/redis/redis.service';
 
 @Injectable()
 export class VideoService {
@@ -12,6 +13,7 @@ export class VideoService {
     private prisma: PrismaService,
     private notificationGateway: NotificationGateway,
     private youtubeService: YoutubeService,
+    private redisService: RedisService,
   ) {}
 
   async shareVideo(shareVideoDto: ShareVideoDto, userId: number) {
@@ -26,17 +28,43 @@ export class VideoService {
       data: {
         sharedBy: userId,
         youtubeId,
+        title: videoDetails.snippet.title,
+      },
+      include: {
+        user: {
+          select: {
+            email: true,
+          },
+        },
       },
     });
-
-    Logger.log(videoDetails);
-
-    this.notificationGateway.sendNotification({
-      youtubeId: video.youtubeId,
-      username: 'hieple',
-      title: videoDetails.snippet.title,
+    const clients = await this.redisService.getUserClients(userId);
+    const clientSet = new Set(clients);
+    this.notificationGateway.sendVideoSharedNotification(
+      {
+        youtubeId: video.youtubeId,
+        email: video.user.email,
+        title: videoDetails.snippet.title,
+      },
+      clientSet,
+    );
+  }
+  async getVideos(skip: number, limit: number) {
+    const videos = await this.prisma.video.findMany({
+      skip,
+      take: limit,
+      orderBy: {
+        sharedAt: 'desc',
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+          },
+        },
+      },
     });
-
-    return video;
+    return videos;
   }
 }
