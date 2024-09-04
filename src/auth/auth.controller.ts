@@ -39,6 +39,7 @@ export class AuthController {
       httpOnly: true,
       maxAge: MAX_AGE_JWT_COOKIE,
       secure: true,
+      sameSite: 'none',
     });
     return res.json({ ...user, token });
   }
@@ -52,6 +53,7 @@ export class AuthController {
       httpOnly: true,
       maxAge: MAX_AGE_JWT_COOKIE,
       secure: true,
+      sameSite: 'none',
     });
     return res.json({ id, email, token });
   }
