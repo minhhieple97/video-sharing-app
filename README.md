@@ -1,6 +1,6 @@
-# YouTube Video Sharing App
+# Video Sharing App Backend
 
-This is a web application for sharing YouTube videos with real-time notifications.
+This is a backend service for sharing YouTube videos with real-time notifications.
 
 ## Prerequisites
 
@@ -17,7 +17,6 @@ This is a web application for sharing YouTube videos with real-time notification
 ## Technologies Used
 
 - Backend: NestJS (Node.js framework)
-- Frontend: React
 - Database: PostgreSQL
 - Real-time notifications: WebSockets
 - Containerization: Docker
@@ -132,3 +131,5 @@ If problems persist, please check the Docker logs for any error messages:
 docker-compose logs
 
 ```
+
+Install the frontend from this link: [video-sharing-client](https://github.com/minhhieple97/video-sharing-client.git)
