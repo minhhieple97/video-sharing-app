@@ -14,6 +14,7 @@ import { VideoService } from './video.service';
 import { JwtAuthGuard } from 'src/auth/guards/jwt.guard';
 import { ShareVideoDto } from './dto/share-video.dto';
 import { IAuthorizedRequest } from 'src/auth/interfaces';
+import { GetVideosDto } from './dto/get-videos.dto';
 
 @Controller('videos')
 export class VideoController {
@@ -30,9 +31,9 @@ export class VideoController {
     return this.videoService.shareVideo(shareVideoDto, user.id);
   }
   @Get()
-  async getVideos(@Query('skip') skip: string, @Query('take') take: string) {
-    const skipNumber = parseInt(skip, 10) || 0;
-    const takeNumber = parseInt(take, 10) || 10;
+  async getVideos(@Query() getVideosDto: GetVideosDto) {
+    const skipNumber = getVideosDto.skip || 0;
+    const takeNumber = getVideosDto.take || 10;
     return this.videoService.getVideos(skipNumber, takeNumber);
   }
 }
