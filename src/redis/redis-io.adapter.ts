@@ -27,7 +27,7 @@ export class RedisIoAdapter extends IoAdapter {
       this.adapterConstructor = createAdapter(pubClient, subClient);
       Logger.log('Redis connection successful');
     } catch (error) {
-      console.error('Error connecting to Redis', error);
+      Logger.error('Error connecting to Redis', error);
     }
   }
 
