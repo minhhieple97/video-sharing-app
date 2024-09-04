@@ -9,12 +9,16 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
   const clientUrl = configService.get('CLIENT_URL');
-  app.useGlobalPipes(new ValidationPipe());
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true,
+    }),
+  );
   app.use(cookieParser());
   app.setGlobalPrefix('api/v1');
   app.enableCors({
     origin: clientUrl,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH', 'HEAD'],
     credentials: true,
   });
   const redisIoAdapter = new RedisIoAdapter(app);
