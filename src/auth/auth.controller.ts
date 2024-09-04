@@ -12,18 +12,15 @@ import {
 import { AuthService } from './auth.service';
 import { Response } from 'express';
 import { RegisterDto } from './dtos/register.dto';
-import { JWT_COOKIE_NAME, MAX_AGE_JWT_COOKIE } from 'src/constants';
+import { JWT_COOKIE_NAME } from 'src/constants';
 import { LoginDto } from './dtos/login.dto';
 import { IAuthorizedRequest } from './interfaces';
 import { JwtAuthGuard } from './guards/jwt.guard';
-import { ConfigService } from '@nestjs/config';
+import { setJwtCookie } from 'src/helper';
 
 @Controller('auth')
 export class AuthController {
-  constructor(
-    private authService: AuthService,
-    private configService: ConfigService,
-  ) {}
+  constructor(private authService: AuthService) {}
 
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
@@ -33,31 +30,18 @@ export class AuthController {
       userData.password,
     );
     const token = await this.authService.generateToken(user);
-    res.cookie(JWT_COOKIE_NAME, token, {
-      // domain: this.configService.get('DOMAIN'),
-      path: '/',
-      httpOnly: true,
-      maxAge: MAX_AGE_JWT_COOKIE,
-      secure: true,
-      sameSite: 'none',
-    });
-    return res.json({ ...user, token });
+    setJwtCookie(res, token);
+    return res.json(user);
   }
   @Post('login')
   @HttpCode(HttpStatus.OK)
   async login(@Body() loginDto: LoginDto, @Res() res: Response) {
     const { id, email, token } = await this.authService.login(loginDto);
-    res.cookie(JWT_COOKIE_NAME, token, {
-      // domain: this.configService.get('DOMAIN'),
-      path: '/',
-      httpOnly: true,
-      maxAge: MAX_AGE_JWT_COOKIE,
-      secure: true,
-      sameSite: 'none',
-    });
-    return res.json({ id, email, token });
+    setJwtCookie(res, token);
+    return res.json({ id, email });
   }
 
+  @UseGuards(JwtAuthGuard)
   @Post('logout')
   @HttpCode(HttpStatus.OK)
   async logout(@Res() res: Response) {
