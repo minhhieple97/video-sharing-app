@@ -40,7 +40,6 @@ export class VideoService {
     });
     const clients = await this.redisService.getUserClients(userId);
     const clientSet = new Set(clients);
-    if (clientSet.size == 0) return;
     this.notificationGateway.sendVideoSharedNotification(
       {
         youtubeId: video.youtubeId,
