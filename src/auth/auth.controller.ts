@@ -12,11 +12,9 @@ import {
 import { AuthService } from './auth.service';
 import { Response } from 'express';
 import { RegisterDto } from './dtos/register.dto';
-import { JWT_COOKIE_NAME } from 'src/constants';
 import { LoginDto } from './dtos/login.dto';
 import { IAuthorizedRequest } from './interfaces';
 import { JwtAuthGuard } from './guards/jwt.guard';
-import { setJwtCookie } from 'src/helper';
 
 @Controller('auth')
 export class AuthController {
@@ -30,23 +28,13 @@ export class AuthController {
       userData.password,
     );
     const token = await this.authService.generateToken(user);
-    setJwtCookie(res, token);
-    return res.json(user);
+    return res.json({ ...user, token });
   }
   @Post('login')
   @HttpCode(HttpStatus.OK)
   async login(@Body() loginDto: LoginDto, @Res() res: Response) {
     const { id, email, token } = await this.authService.login(loginDto);
-    setJwtCookie(res, token);
-    return res.json({ id, email });
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Post('logout')
-  @HttpCode(HttpStatus.OK)
-  async logout(@Res() res: Response) {
-    res.clearCookie(JWT_COOKIE_NAME);
-    return res.json({ message: 'User logged out successfully' });
+    return res.json({ id, email, token });
   }
 
   @UseGuards(JwtAuthGuard)

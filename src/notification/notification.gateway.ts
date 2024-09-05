@@ -16,7 +16,7 @@ import { RedisService } from 'src/redis/redis.service';
   cors: {
     origin: '*',
   },
-  transports: ['websocket'],
+  transports: ['websocket', 'polling'],
 })
 @Injectable()
 export class NotificationGateway implements OnGatewayConnection {
