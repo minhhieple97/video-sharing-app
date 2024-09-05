@@ -38,7 +38,7 @@ This is a backend service for sharing YouTube videos with real-time notification
    - Create credentials (API key) for the YouTube Data API.
    - Copy the generated API key and use it in your `.env` file.
 
-3. Create a `.env` file in the `root` directory follow `.env.example` and add the following environment variables:
+3. Create a `.env.development` file in the `root` directory following `.env.example` and add the following environment variables:
 
    ```
       REDIS_HOST=redis
@@ -51,28 +51,41 @@ This is a backend service for sharing YouTube videos with real-time notification
       PORT=3000
    ```
 
-4. Build and start the Docker containers:
+4. Create a `.env.test` file in the `root` directory following `.env.example` and add the following environment variables:
+
+   ```
+      DATABASE_URL="postgresql://postgres:postgres@postgres_test:5432/video_sharing_test"
+      REDIS_HOST=redis
+      REDIS_PORT=6379
+      JWT_SECRET=secret
+      YOUTUBE_API_KEY=YOUR_API_KEY_HERE
+      DOMAIN=localhost
+      CLIENT_URL=http://localhost:5173
+      PORT=3000
+   ```
+
+5. Build and start the Docker containers:
 
    ```
    docker-compose up --build -d
    ```
 
-5. **Seed the database:**
+6. **Seed the database:**
 
    ```
    docker-compose run backend pnpm run seed
    ```
 
-6. The application should now be running. Access it through your web browser:
+7. The application should now be running. Access it through your web browser:
    - Backend API: http://localhost:3000
    - Redis GUI: http://localhost:8082
 
-## Running Tests
+## Running Tests (Using Docker)
 
-To run the tests, use the following command:
+**To run the tests, use the following command:**
 
 ```
-pnpm run test
+docker-compose run backend npm run test
 ```
 
 ## Usage
@@ -107,7 +120,7 @@ To use the YouTube Video Sharing App, follow these steps:
 
 If you encounter any issues, please try the following steps:
 
-1. Ensure all required ports (3000,5433,8082) are available on your machine.
+1. Ensure all required ports (3000,5433,5434,8082) are available on your machine.
 2. If you've previously run the application, try removing all related containers and volumes:
 
 ```
@@ -132,4 +145,4 @@ docker-compose logs
 
 ```
 
-Install the frontend from this link: [video-sharing-client](https://github.com/minhhieple97/video-sharing-client.git)
+4. Please make sure that your `.env.development` and `.env.test` files are correctly set up and that the environment variables are correctly configured. If you are using a different API key, please update the `.env.development` and `.env.test` files with the correct API key and re-run the Docker containers.
