@@ -27,7 +27,7 @@ This is a backend service for sharing YouTube videos with real-time notification
 
    ```
    git clone https://github.com/minhhieple97/video-sharing-app.git
-   cd youtube-video-sharing-app
+   cd video-sharing-app
    ```
 
 2. **Obtain YouTube Data API credentials:**
