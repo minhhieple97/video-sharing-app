@@ -7,6 +7,12 @@ This is a backend service for sharing YouTube videos with real-time notification
 - Docker
 - Docker Compose
 
+## Local Development Prerequisites (Optional)
+
+- Node.js (v20.12.0 or higher)
+- pnpm (v9.0.0 or higher)
+- Prisma CLI (v5.11.0 or higher)
+
 ## Features
 
 - User registration and login
@@ -36,7 +42,7 @@ This is a backend service for sharing YouTube videos with real-time notification
    - Create a new project or select an existing one.
    - Enable the YouTube Data API v3.
    - Create credentials (API key) for the YouTube Data API.
-   - Copy the generated API key and use it in your `.env` file.
+   - Copy the generated API key and use it in your `.env.development` and `.env.test` files.
 
 3. Create a `.env.development` file in the `root` directory following `.env.example` and add the following environment variables:
 
@@ -77,8 +83,19 @@ This is a backend service for sharing YouTube videos with real-time notification
    ```
 
 7. The application should now be running. Access it through your web browser:
+
    - Backend API: http://localhost:3000
    - Redis GUI: http://localhost:8082
+
+8. Setup for local development (optional)
+
+```
+pnpm install
+```
+
+```
+npx prisma generate
+```
 
 ## Running Tests (Using Docker)
 
