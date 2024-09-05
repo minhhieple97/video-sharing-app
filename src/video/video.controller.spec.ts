@@ -3,7 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { VideoService } from './video.service';
 import { ShareVideoDto } from './dto/share-video.dto';
 import * as argon2 from 'argon2';
-import * as cookieParser from 'cookie-parser';
+import { JwtService } from '@nestjs/jwt';
 import { HttpStatus, INestApplication, ValidationPipe } from '@nestjs/common';
 import * as request from 'supertest';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -11,7 +11,6 @@ import { AuthService } from 'src/auth/auth.service';
 import { VideoModule } from './video.module';
 import { ConfigModule } from '@nestjs/config';
 import { User } from '@prisma/client';
-import { JWT_COOKIE_NAME } from 'src/constants';
 import { AuthModule } from 'src/auth/auth.module';
 import { GetVideosDto } from './dto/get-videos.dto';
 
@@ -20,6 +19,7 @@ describe('VideoController (integration)', () => {
   let videoService: VideoService;
   let prismaService: PrismaService;
   let authService: AuthService;
+  let jwtService: JwtService;
   let user: User;
   let token: string;
   beforeAll(async () => {
@@ -38,12 +38,13 @@ describe('VideoController (integration)', () => {
     prismaService = moduleFixture.get<PrismaService>(PrismaService);
     authService = moduleFixture.get<AuthService>(AuthService);
     videoService = moduleFixture.get<VideoService>(VideoService);
+    jwtService = moduleFixture.get<JwtService>(JwtService);
+
     app.useGlobalPipes(
       new ValidationPipe({
         transform: true,
       }),
     );
-    app.use(cookieParser());
     await app.init();
 
     videoService = moduleFixture.get<VideoService>(VideoService);
@@ -53,7 +54,11 @@ describe('VideoController (integration)', () => {
         password: await argon2.hash('password123'),
       },
     });
-    token = await authService.generateToken(user);
+
+    token = await authService.generateToken({
+      id: user.id,
+      email: user.email,
+    });
   });
 
   afterAll(async () => {
@@ -71,7 +76,7 @@ describe('VideoController (integration)', () => {
 
       const response = await request(app.getHttpServer())
         .post('/videos/share')
-        .set('Cookie', [`${JWT_COOKIE_NAME}=${token}`])
+        .set('Authorization', `Bearer ${token}`)
         .send(shareVideoDto)
         .expect(HttpStatus.CREATED);
 
@@ -95,7 +100,7 @@ describe('VideoController (integration)', () => {
       };
       await request(app.getHttpServer())
         .post('/videos/share')
-        .set('Cookie', [`${JWT_COOKIE_NAME}=${token}`])
+        .set('Authorization', `Bearer ${token}`)
         .send(invalidShareVideoDto)
         .expect(HttpStatus.BAD_REQUEST);
     });
@@ -107,7 +112,7 @@ describe('VideoController (integration)', () => {
 
       await request(app.getHttpServer())
         .post('/videos/share')
-        .set('Cookie', [`${JWT_COOKIE_NAME}=${token}`])
+        .set('Authorization', `Bearer ${token}`)
         .send(invalidShareVideoDto)
         .expect(HttpStatus.BAD_REQUEST);
     });

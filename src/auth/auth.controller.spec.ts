@@ -5,15 +5,14 @@ import { ConfigModule } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthModule } from './auth.module';
 import * as argon2 from 'argon2';
-import { JWT_COOKIE_NAME } from 'src/constants';
 import { AuthService } from './auth.service';
-import * as cookieParser from 'cookie-parser';
-import { JwtTokenPayload } from './interfaces';
+import { JwtService } from '@nestjs/jwt';
 
 describe('AuthController (Integration)', () => {
   let app: INestApplication;
   let prismaService: PrismaService;
   let authService: AuthService;
+  let jwtService: JwtService;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -27,11 +26,11 @@ describe('AuthController (Integration)', () => {
 
     app = moduleFixture.createNestApplication();
     app.useGlobalPipes(new ValidationPipe());
-    app.use(cookieParser());
     await app.init();
 
     prismaService = moduleFixture.get<PrismaService>(PrismaService);
     authService = moduleFixture.get<AuthService>(AuthService);
+    jwtService = moduleFixture.get<JwtService>(JwtService);
   });
 
   afterAll(async () => {
@@ -53,7 +52,11 @@ describe('AuthController (Integration)', () => {
 
       expect(response.body).toHaveProperty('id');
       expect(response.body.email).toBe('test@example.com');
-      expect(response.headers['set-cookie']).toBeDefined();
+      expect(response.body.token).toBeDefined();
+      const decodedToken = jwtService.decode(response.body.token);
+      expect(decodedToken).toHaveProperty('id');
+      expect(decodedToken).toHaveProperty('email');
+      expect(decodedToken).toHaveProperty('iat');
     });
 
     it('should return 400 for invalid input', async () => {
@@ -83,22 +86,12 @@ describe('AuthController (Integration)', () => {
 
       expect(response.body).toHaveProperty('id');
       expect(response.body.email).toBe(user.email);
-      expect(response.headers['set-cookie']).toBeDefined();
-      const cookies = response.headers['set-cookie'];
-      expect(cookies).toBeDefined();
-      const cookiesArray = Array.isArray(cookies) ? cookies : [cookies];
-      const accessTokenCookie = cookiesArray.find((cookie) =>
-        cookie.startsWith(`${JWT_COOKIE_NAME}=`),
-      );
-      expect(accessTokenCookie).toBeDefined();
+      expect(response.body.token).toBeDefined();
 
-      // Check the cookie attributes
-      expect(accessTokenCookie).toMatch(/Max-Age=3600/);
-      expect(accessTokenCookie).toMatch(/Path=\//);
-      expect(accessTokenCookie).toMatch(/Expires=/);
-      expect(accessTokenCookie).toMatch(/HttpOnly/);
-      expect(accessTokenCookie).toMatch(/Secure/);
-      expect(accessTokenCookie).toMatch(/SameSite=None/);
+      const decodedToken = jwtService.decode(response.body.token);
+      expect(decodedToken).toHaveProperty('id');
+      expect(decodedToken).toHaveProperty('email');
+      expect(decodedToken).toHaveProperty('iat');
     });
 
     it('should return 401 for invalid credentials', async () => {
@@ -106,30 +99,6 @@ describe('AuthController (Integration)', () => {
         .post('/auth/login')
         .send({ email: 'existing@example.com', password: 'wrongpassword' })
         .expect(401);
-    });
-  });
-
-  describe('/auth/logout (POST)', () => {
-    it('should clear the JWT cookie', async () => {
-      const token = await authService.generateToken({
-        id: 1,
-        email: 'test@example.com',
-      });
-      const response = await request(app.getHttpServer())
-        .post('/auth/logout')
-        .set('Cookie', [`${JWT_COOKIE_NAME}=${token}`])
-        .expect(200);
-      const cookies = response.headers['set-cookie'];
-      expect(response.body.message).toBe('User logged out successfully');
-      expect(response.headers['set-cookie'][0]).toContain(
-        `${JWT_COOKIE_NAME}=;`,
-      );
-      expect(cookies).toBeDefined();
-      expect(cookies[0]).toContain('access_token=;');
-      expect(cookies[0]).toContain('Expires=Thu, 01 Jan 1970 00:00:00 GMT');
-    });
-    it('should return 401 if not authenticated', async () => {
-      await request(app.getHttpServer()).post('/auth/logout').expect(401);
     });
   });
 
@@ -142,7 +111,7 @@ describe('AuthController (Integration)', () => {
       const token = await authService.generateToken(userExample);
       const response = await request(app.getHttpServer())
         .get('/auth/profile')
-        .set('Cookie', [`${JWT_COOKIE_NAME}=${token}`])
+        .set('Authorization', `Bearer ${token}`)
         .expect(200);
 
       expect(response.body).toMatchObject({
@@ -157,7 +126,7 @@ describe('AuthController (Integration)', () => {
       expect(response.body.iat).toBeGreaterThan(now - 60);
       expect(response.body.iat).toBeLessThanOrEqual(now);
 
-      const fullPayload = response.body as JwtTokenPayload;
+      const fullPayload = response.body;
       expect(fullPayload).toEqual(
         expect.objectContaining({
           id: expect.any(Number),

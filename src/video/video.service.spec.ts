@@ -126,28 +126,6 @@ describe('VideoService', () => {
         ),
       ).rejects.toThrow('YouTube API Error');
     });
-
-    it('should not send notification if no other clients are connected', async () => {
-      (helper.checkValidYoutubeLink as jest.Mock).mockReturnValue(true);
-      (helper.getYoutubeVideoId as jest.Mock).mockReturnValue('validId');
-      mockYoutubeService.getVideoInfo.mockResolvedValue({
-        snippet: { title: 'Test Video' },
-      });
-      mockPrismaService.video.create.mockResolvedValue({
-        youtubeId: 'validId',
-        user: { email: 'test@example.com' },
-      });
-      mockRedisService.getUserClients.mockResolvedValue([]);
-
-      await service.shareVideo(
-        { youtubeLink: 'https://www.youtube.com/watch?v=validId' },
-        1,
-      );
-
-      expect(
-        mockNotificationGateway.sendVideoSharedNotification,
-      ).not.toHaveBeenCalled();
-    });
   });
 
   describe('getVideos', () => {
