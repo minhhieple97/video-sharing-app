@@ -124,11 +124,13 @@ describe('VideoController (integration)', () => {
             title: 'Video 1',
             youtubeId: 'dQw4w9WgXcQ',
             sharedBy: user.id,
+            sharedAt: new Date(),
           },
           {
             title: 'Video 2',
             youtubeId: 'dQw4w9WgsdQ',
             sharedBy: user.id,
+            sharedAt: new Date(new Date().setDate(new Date().getDate() + 1)),
           },
         ],
       });
@@ -138,7 +140,7 @@ describe('VideoController (integration)', () => {
         .get('/videos')
         .expect(HttpStatus.OK);
       expect(response.body).toHaveLength(2);
-      expect(response.body[0]).toMatchObject({
+      expect(response.body[1]).toMatchObject({
         id: expect.any(Number),
         sharedAt: expect.any(String),
         sharedBy: user.id,
@@ -149,7 +151,7 @@ describe('VideoController (integration)', () => {
         },
         youtubeId: 'dQw4w9WgXcQ',
       });
-      expect(response.body[1]).toMatchObject({
+      expect(response.body[0]).toMatchObject({
         id: expect.any(Number),
         sharedAt: expect.any(String),
         sharedBy: user.id,
