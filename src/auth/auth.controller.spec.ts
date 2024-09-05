@@ -17,7 +17,12 @@ describe('AuthController (Integration)', () => {
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AuthModule, ConfigModule.forRoot()],
+      imports: [
+        AuthModule,
+        ConfigModule.forRoot({
+          envFilePath: '.env.test',
+        }),
+      ],
     }).compile();
 
     app = moduleFixture.createNestApplication();
@@ -30,8 +35,9 @@ describe('AuthController (Integration)', () => {
   });
 
   afterAll(async () => {
-    await prismaService.user.deleteMany();
     await prismaService.video.deleteMany();
+    await prismaService.user.deleteMany();
+    await prismaService.$disconnect();
     await app.close();
   });
 
@@ -59,23 +65,24 @@ describe('AuthController (Integration)', () => {
   });
 
   describe('/auth/login (POST)', () => {
-    beforeAll(async () => {
+    it('should login an existing user', async () => {
+      const user = {
+        email: 'existing@example.com',
+        password: 'password123',
+      };
       await prismaService.user.create({
         data: {
-          email: 'existing@example.com',
-          password: await argon2.hash('password123'),
+          email: user.email,
+          password: await argon2.hash(user.password),
         },
       });
-    });
-
-    it('should login an existing user', async () => {
       const response = await request(app.getHttpServer())
         .post('/auth/login')
-        .send({ email: 'existing@example.com', password: 'password123' })
+        .send(user)
         .expect(200);
 
       expect(response.body).toHaveProperty('id');
-      expect(response.body.email).toBe('existing@example.com');
+      expect(response.body.email).toBe(user.email);
       expect(response.headers['set-cookie']).toBeDefined();
       const cookies = response.headers['set-cookie'];
       expect(cookies).toBeDefined();
