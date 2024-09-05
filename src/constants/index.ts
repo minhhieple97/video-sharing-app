@@ -7,5 +7,6 @@ export const JWT_COOKIE_OPTIONS: CookieOptions = {
   httpOnly: true,
   maxAge: MAX_AGE_JWT_COOKIE,
   secure: true,
-  sameSite: 'strict',
+  sameSite: 'none',
+  domain: '.onrender.com',
 };
