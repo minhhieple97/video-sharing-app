@@ -1,6 +1,6 @@
 FROM node:20-alpine
 
-RUN npm install -g pnpm
+RUN npm install -g pnpm dotenv-cli
 
 WORKDIR /usr/src/app
 
@@ -18,4 +18,4 @@ RUN pnpm run build
 
 EXPOSE 3000
 
-CMD ["sh", "-c", "pnpm prisma migrate deploy && pnpm run start:dev"]
+CMD ["sh", "-c", "pnpm run migrate:test && pnpm run migrate:dev && pnpm run start:dev"]
