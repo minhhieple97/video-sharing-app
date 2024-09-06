@@ -2,6 +2,12 @@
 
 This is a backend service for sharing YouTube videos with real-time notifications.
 
+You can find the frontend part of this app at [here](https://github.com/minhhieple97/video-sharing-client.git).
+
+## Live Demo
+
+You can try out the live demo of this application at [here](https://video-sharing-green.vercel.app/).
+
 ## Prerequisites
 
 - Docker
@@ -162,4 +168,4 @@ docker-compose logs
 
 ```
 
-4. Please make sure that your `.env.development` and `.env.test` files are correctly set up and that the environment variables are correctly configured. If you are using a different API key, please update the `.env.development` and `.env.test` files with the correct API key and re-run the Docker containers.
+4. Please make sure that you create both `.env.development` and `.env.test` files in the root directory and they are correctly set up and that the environment variables are correctly configured. If you are using a different API key, please update the `.env.development` and `.env.test` files with the correct API key and re-run the Docker containers.
