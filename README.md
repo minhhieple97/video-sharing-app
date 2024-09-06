@@ -111,6 +111,13 @@ npx prisma generate
 docker-compose run backend npm run test
 ```
 
+You can check unit test and integration test in
+
+- `src/video/video.controller.spec.ts`
+- `src/video/video.service.spec.ts`
+- `src/auth/auth.service.spec.ts`
+- `src/auth/auth.controller.spec.ts`
+
 ## Usage
 
 To use the YouTube Video Sharing App, follow these steps:
