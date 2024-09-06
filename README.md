@@ -111,12 +111,17 @@ npx prisma generate
 docker-compose run backend npm run test
 ```
 
-You can check unit test and integration test in
+You can check unit test in
 
 - `src/video/video.controller.spec.ts`
 - `src/video/video.service.spec.ts`
 - `src/auth/auth.service.spec.ts`
 - `src/auth/auth.controller.spec.ts`
+
+You can check integration test in
+
+- `src/auth/auth.e2e.spec.ts`
+- `src/video/video.e2e.spec.ts`
 
 ## Usage
 

@@ -2,217 +2,82 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { VideoService } from './video.service';
 import { ShareVideoDto } from './dto/share-video.dto';
-import * as argon2 from 'argon2';
-import { JwtService } from '@nestjs/jwt';
-import { HttpStatus, INestApplication, ValidationPipe } from '@nestjs/common';
-import * as request from 'supertest';
-import { PrismaService } from 'src/prisma/prisma.service';
-import { AuthService } from 'src/auth/auth.service';
+import { JwtModule } from '@nestjs/jwt';
+
 import { VideoModule } from './video.module';
 import { ConfigModule } from '@nestjs/config';
-import { User } from '@prisma/client';
 import { AuthModule } from 'src/auth/auth.module';
-import { GetVideosDto } from './dto/get-videos.dto';
+import { VideoController } from './video.controller';
+import { IAuthorizedRequest } from 'src/auth/interfaces';
 
-describe('VideoController (integration)', () => {
-  let app: INestApplication;
+describe('VideoController (unit)', () => {
+  let videoController: VideoController;
   let videoService: VideoService;
-  let prismaService: PrismaService;
-  let authService: AuthService;
-  let jwtService: JwtService;
-  let user: User;
-  let token: string;
-  beforeAll(async () => {
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [
-        VideoModule,
-        AuthModule,
-        ConfigModule.forRoot({
-          envFilePath: '.env.test',
-        }),
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      imports: [VideoModule, AuthModule, ConfigModule, JwtModule],
+      controllers: [VideoController],
+      providers: [
+        {
+          provide: VideoService,
+          useValue: {
+            shareVideo: jest.fn(),
+            getVideos: jest.fn(),
+          },
+        },
       ],
     }).compile();
 
-    app = moduleFixture.createNestApplication();
-
-    prismaService = moduleFixture.get<PrismaService>(PrismaService);
-    authService = moduleFixture.get<AuthService>(AuthService);
-    videoService = moduleFixture.get<VideoService>(VideoService);
-    jwtService = moduleFixture.get<JwtService>(JwtService);
-
-    app.useGlobalPipes(
-      new ValidationPipe({
-        transform: true,
-      }),
-    );
-    await app.init();
-
-    videoService = moduleFixture.get<VideoService>(VideoService);
-    user = await prismaService.user.create({
-      data: {
-        email: 'existing@example.com',
-        password: await argon2.hash('password123'),
-      },
-    });
-
-    token = await authService.generateToken({
-      id: user.id,
-      email: user.email,
-    });
+    videoController = module.get<VideoController>(VideoController);
+    videoService = module.get<VideoService>(VideoService);
   });
 
-  afterAll(async () => {
-    await prismaService.video.deleteMany();
-    await prismaService.user.deleteMany();
-    await prismaService.$disconnect();
-    await app.close();
-  });
-
-  describe('POST /videos/share', () => {
-    it('should share a video successfully', async () => {
+  describe('shareVideo', () => {
+    it('should return the result from videoService.shareVideo', async () => {
       const shareVideoDto: ShareVideoDto = {
         youtubeLink: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
       };
+      const userId = 1;
+      const req = { user: { id: userId } } as IAuthorizedRequest;
 
-      const response = await request(app.getHttpServer())
-        .post('/videos/share')
-        .set('Authorization', `Bearer ${token}`)
-        .send(shareVideoDto)
-        .expect(HttpStatus.CREATED);
+      jest.spyOn(videoService, 'shareVideo').mockResolvedValue();
 
-      expect(response.body).toEqual({});
-    });
+      const result = await videoController.shareVideo(shareVideoDto, req);
 
-    it('should return 401 for unauthenticated user', async () => {
-      const invalidShareVideoDto: ShareVideoDto = {
-        youtubeLink: 'not-a-valid-url',
-      };
-
-      await request(app.getHttpServer())
-        .post('/videos/share')
-        .send(invalidShareVideoDto)
-        .expect(HttpStatus.UNAUTHORIZED);
-    });
-
-    it('should return 400 for invalid video URL', async () => {
-      const invalidShareVideoDto: ShareVideoDto = {
-        youtubeLink: 'not-a-valid-url',
-      };
-      await request(app.getHttpServer())
-        .post('/videos/share')
-        .set('Authorization', `Bearer ${token}`)
-        .send(invalidShareVideoDto)
-        .expect(HttpStatus.BAD_REQUEST);
-    });
-
-    it('should return 400 for non-YouTube URL', async () => {
-      const invalidShareVideoDto: ShareVideoDto = {
-        youtubeLink: 'https://vimeo.com/123456789',
-      };
-
-      await request(app.getHttpServer())
-        .post('/videos/share')
-        .set('Authorization', `Bearer ${token}`)
-        .send(invalidShareVideoDto)
-        .expect(HttpStatus.BAD_REQUEST);
-    });
-    afterAll(async () => {
-      await prismaService.video.deleteMany();
+      expect(result).toBeUndefined();
     });
   });
 
-  describe('GET /videos', () => {
-    beforeEach(async () => {
-      await prismaService.video.createMany({
-        data: [
-          {
-            title: 'Video 1',
-            youtubeId: 'dQw4w9WgXcQ',
-            sharedBy: user.id,
-            sharedAt: new Date(),
-          },
-          {
-            title: 'Video 2',
-            youtubeId: 'dQw4w9WgsdQ',
-            sharedBy: user.id,
-            sharedAt: new Date(new Date().setDate(new Date().getDate() + 1)),
-          },
-        ],
-      });
-    });
-    it('should get videos with default pagination', async () => {
-      const response = await request(app.getHttpServer())
-        .get('/videos')
-        .expect(HttpStatus.OK);
-      expect(response.body).toHaveLength(2);
-      expect(response.body[1]).toMatchObject({
-        id: expect.any(Number),
-        sharedAt: expect.any(String),
-        sharedBy: user.id,
-        title: 'Video 1',
-        user: {
-          email: user.email,
-          id: user.id,
-        },
-        youtubeId: 'dQw4w9WgXcQ',
-      });
-      expect(response.body[0]).toMatchObject({
-        id: expect.any(Number),
-        sharedAt: expect.any(String),
-        sharedBy: user.id,
-        title: 'Video 2',
-        user: {
-          email: user.email,
-          id: user.id,
-        },
-        youtubeId: 'dQw4w9WgsdQ',
-      });
+  describe('getVideos', () => {
+    it('should call videoService.getVideos with default parameters when not provided', async () => {
+      const getVideosDto = {};
+      const mockGetVideos = jest.fn().mockResolvedValue([]);
+      videoService.getVideos = mockGetVideos;
+
+      await videoController.getVideos(getVideosDto);
+
+      expect(mockGetVideos).toHaveBeenCalledWith(0, 10);
     });
 
-    it('should not get videos with over the limit skip value', async () => {
-      const getVideosDto: GetVideosDto = { skip: 5, take: 20 };
+    it('should call videoService.getVideos with provided parameters', async () => {
+      const getVideosDto = { skip: 5, limit: 10 };
+      const mockGetVideos = jest.fn().mockResolvedValue([]);
+      videoService.getVideos = mockGetVideos;
 
-      const response = await request(app.getHttpServer())
-        .get(`/videos?skip=${getVideosDto.skip}&take=${getVideosDto.take}`)
-        .expect(HttpStatus.OK);
-      expect(response.body).toHaveLength(0);
+      await videoController.getVideos(getVideosDto);
+
+      expect(mockGetVideos).toHaveBeenCalledWith(5, 10);
     });
 
-    it('should get videos with over the limit take value', async () => {
-      const getVideosDto: GetVideosDto = { skip: 0, take: 2 };
+    it('should return the result from videoService.getVideos', async () => {
+      const mockVideos = [{ id: 1, title: 'Test Video' }];
+      const mockGetVideos = jest.fn().mockResolvedValue(mockVideos);
+      videoService.getVideos = mockGetVideos;
 
-      const response = await request(app.getHttpServer())
-        .get(`/videos?skip=${getVideosDto.skip}&take=${getVideosDto.take}`)
-        .expect(HttpStatus.OK);
-      expect(response.body).toHaveLength(2);
-    });
+      const result = await videoController.getVideos({});
 
-    it('should handle negative skip value', async () => {
-      const getVideosDto: GetVideosDto = { skip: -5, take: 10 };
-
-      await request(app.getHttpServer())
-        .get(`/videos?skip=${getVideosDto.skip}&take=${getVideosDto.take}`)
-        .expect(HttpStatus.BAD_REQUEST);
-    });
-
-    it('should handle negative take value', async () => {
-      const getVideosDto: GetVideosDto = { skip: 0, take: -10 };
-
-      await request(app.getHttpServer())
-        .get(`/videos?skip=${getVideosDto.skip}&take=${getVideosDto.take}`)
-        .expect(HttpStatus.BAD_REQUEST);
-    });
-
-    it('should handle zero take value', async () => {
-      const getVideosDto: GetVideosDto = { skip: 0, take: 0 };
-
-      await request(app.getHttpServer())
-        .get(`/videos?skip=${getVideosDto.skip}&take=${getVideosDto.take}`)
-        .expect(HttpStatus.BAD_REQUEST);
-    });
-
-    afterEach(async () => {
-      await prismaService.video.deleteMany();
+      expect(result).toEqual(mockVideos);
     });
   });
 });

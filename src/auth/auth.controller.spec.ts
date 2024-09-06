@@ -1,143 +1,187 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ValidationPipe } from '@nestjs/common';
-import * as request from 'supertest';
-import { ConfigModule } from '@nestjs/config';
-import { PrismaService } from '../prisma/prisma.service';
-import { AuthModule } from './auth.module';
-import * as argon2 from 'argon2';
+import { HttpException, HttpStatus } from '@nestjs/common';
+
 import { AuthService } from './auth.service';
-import { JwtService } from '@nestjs/jwt';
+import { AuthController } from './auth.controller';
+import { RegisterDto } from './dtos/register.dto';
+import { LoginDto } from './dtos/login.dto';
+import { IAuthorizedRequest } from './interfaces';
+import { JwtAuthGuard } from './guards/jwt.guard';
 
-describe('AuthController (Integration)', () => {
-  let app: INestApplication;
-  let prismaService: PrismaService;
+jest.mock('./guards/jwt.guard');
+
+describe('AuthController (unit)', () => {
+  let authController: AuthController;
   let authService: AuthService;
-  let jwtService: JwtService;
+  let jwtAuthGuard: JwtAuthGuard;
 
-  beforeAll(async () => {
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [
-        AuthModule,
-        ConfigModule.forRoot({
-          envFilePath: '.env.test',
-        }),
+  const mockAuthService = {
+    register: jest.fn(),
+    generateToken: jest.fn(),
+    login: jest.fn(),
+  };
+
+  const mockResponse = {
+    json: jest.fn().mockReturnThis(),
+    status: jest.fn().mockReturnThis(),
+  };
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      controllers: [AuthController],
+      providers: [
+        {
+          provide: AuthService,
+          useValue: mockAuthService,
+        },
+        {
+          provide: JwtAuthGuard,
+          useValue: {
+            canActivate: jest.fn(),
+          },
+        },
       ],
     }).compile();
 
-    app = moduleFixture.createNestApplication();
-    app.useGlobalPipes(new ValidationPipe());
-    await app.init();
-
-    prismaService = moduleFixture.get<PrismaService>(PrismaService);
-    authService = moduleFixture.get<AuthService>(AuthService);
-    jwtService = moduleFixture.get<JwtService>(JwtService);
+    authController = module.get<AuthController>(AuthController);
+    authService = module.get<AuthService>(AuthService);
+    jwtAuthGuard = module.get<JwtAuthGuard>(JwtAuthGuard);
+  });
+  afterEach(() => {
+    jest.clearAllMocks();
   });
 
-  afterAll(async () => {
-    await prismaService.video.deleteMany();
-    await prismaService.user.deleteMany();
-    await prismaService.$disconnect();
-    await app.close();
+  it('should be defined', () => {
+    expect(authController).toBeDefined();
   });
 
-  describe('/auth/register (POST)', () => {
-    it('should register a new user', async () => {
-      const response = await request(app.getHttpServer())
-        .post('/auth/register')
-        .send({
-          email: 'test@example.com',
-          password: await argon2.hash('password123'),
-        })
-        .expect(201);
-
-      expect(response.body).toHaveProperty('id');
-      expect(response.body.email).toBe('test@example.com');
-      expect(response.body.token).toBeDefined();
-      const decodedToken = jwtService.decode(response.body.token);
-      expect(decodedToken).toHaveProperty('id');
-      expect(decodedToken).toHaveProperty('email');
-      expect(decodedToken).toHaveProperty('iat');
-    });
-
-    it('should return 400 for invalid input', async () => {
-      await request(app.getHttpServer())
-        .post('/auth/register')
-        .send({ email: 'invalid-email', password: '123' })
-        .expect(400);
-    });
-  });
-
-  describe('/auth/login (POST)', () => {
-    it('should login an existing user', async () => {
-      const user = {
-        email: 'existing@example.com',
+  describe('register', () => {
+    const registerDto: RegisterDto = {
+      email: 'test@example.com',
+      password: 'password123',
+    };
+    it('should register a new user and return user with token', async () => {
+      const registerDto: RegisterDto = {
+        email: 'test@example.com',
         password: 'password123',
       };
-      await prismaService.user.create({
-        data: {
-          email: user.email,
-          password: await argon2.hash(user.password),
-        },
+      const mockUser = { id: '1', email: registerDto.email };
+      const mockToken = 'mock.jwt.token';
+
+      mockAuthService.register.mockResolvedValue(mockUser);
+      mockAuthService.generateToken.mockResolvedValue(mockToken);
+
+      await authController.register(registerDto, mockResponse as any);
+
+      expect(authService.register).toHaveBeenCalledWith(
+        registerDto.email,
+        registerDto.password,
+      );
+      expect(authService.generateToken).toHaveBeenCalledWith(mockUser);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        ...mockUser,
+        token: mockToken,
       });
-      const response = await request(app.getHttpServer())
-        .post('/auth/login')
-        .send(user)
-        .expect(200);
+    });
+    it('should throw an exception if registration fails', async () => {
+      mockAuthService.register.mockRejectedValue(
+        new Error('Registration failed'),
+      );
 
-      expect(response.body).toHaveProperty('id');
-      expect(response.body.email).toBe(user.email);
-      expect(response.body.token).toBeDefined();
-
-      const decodedToken = jwtService.decode(response.body.token);
-      expect(decodedToken).toHaveProperty('id');
-      expect(decodedToken).toHaveProperty('email');
-      expect(decodedToken).toHaveProperty('iat');
+      await expect(
+        authController.register(registerDto, mockResponse as any),
+      ).rejects.toThrow('Registration failed');
     });
 
-    it('should return 401 for invalid credentials', async () => {
-      await request(app.getHttpServer())
-        .post('/auth/login')
-        .send({ email: 'existing@example.com', password: 'wrongpassword' })
-        .expect(401);
+    it('should handle duplicate email error', async () => {
+      mockAuthService.register.mockRejectedValue(
+        new HttpException('Email already exists', HttpStatus.CONFLICT),
+      );
+
+      await expect(
+        authController.register(registerDto, mockResponse as any),
+      ).rejects.toThrow(HttpException);
+      await expect(
+        authController.register(registerDto, mockResponse as any),
+      ).rejects.toHaveProperty('status', HttpStatus.CONFLICT);
     });
   });
 
-  describe('/auth/profile (GET)', () => {
-    it('should return user profile if authenticated', async () => {
-      const userExample = {
-        id: 1,
+  describe('login', () => {
+    const loginDto: LoginDto = {
+      email: 'test@example.com',
+      password: 'password123',
+    };
+    it('should login a user and return user info with token', async () => {
+      const loginDto: LoginDto = {
         email: 'test@example.com',
+        password: 'password123',
       };
-      const token = await authService.generateToken(userExample);
-      const response = await request(app.getHttpServer())
-        .get('/auth/profile')
-        .set('Authorization', `Bearer ${token}`)
-        .expect(200);
+      const mockLoginResponse = {
+        id: '1',
+        email: loginDto.email,
+        token: 'mock.jwt.token',
+      };
 
-      expect(response.body).toMatchObject({
-        id: userExample.id,
-        email: userExample.email,
-      });
+      mockAuthService.login.mockResolvedValue(mockLoginResponse);
 
-      expect(response.body.iat).toBeDefined();
-      expect(typeof response.body.iat).toBe('number');
+      await authController.login(loginDto, mockResponse as any);
 
-      const now = Math.floor(Date.now() / 1000);
-      expect(response.body.iat).toBeGreaterThan(now - 60);
-      expect(response.body.iat).toBeLessThanOrEqual(now);
-
-      const fullPayload = response.body;
-      expect(fullPayload).toEqual(
-        expect.objectContaining({
-          id: expect.any(Number),
-          email: expect.any(String),
-          iat: expect.any(Number),
-        }),
+      expect(authService.login).toHaveBeenCalledWith(loginDto);
+      expect(mockResponse.json).toHaveBeenCalledWith(mockLoginResponse);
+    });
+    it('should throw an exception if login fails', async () => {
+      mockAuthService.login.mockRejectedValue(
+        new HttpException('Invalid credentials', HttpStatus.UNAUTHORIZED),
       );
+
+      await expect(
+        authController.login(loginDto, mockResponse as any),
+      ).rejects.toThrow(HttpException);
+      await expect(
+        authController.login(loginDto, mockResponse as any),
+      ).rejects.toHaveProperty('status', HttpStatus.UNAUTHORIZED);
     });
 
-    it('should return 401 if not authenticated', async () => {
-      await request(app.getHttpServer()).get('/auth/profile').expect(401);
+    it('should handle non-existent user error', async () => {
+      mockAuthService.login.mockRejectedValue(
+        new HttpException('User not found', HttpStatus.NOT_FOUND),
+      );
+
+      await expect(
+        authController.login(loginDto, mockResponse as any),
+      ).rejects.toThrow(HttpException);
+      await expect(
+        authController.login(loginDto, mockResponse as any),
+      ).rejects.toHaveProperty('status', HttpStatus.NOT_FOUND);
+    });
+  });
+
+  describe('profile', () => {
+    it('should return user profile when authenticated', async () => {
+      const mockUser = { id: '1', email: 'test@example.com' };
+      const mockRequest = { user: mockUser } as unknown as IAuthorizedRequest;
+
+      const result = await authController.profile(mockRequest as any);
+
+      expect(result).toEqual(mockUser);
+    });
+
+    it('should return HttpStatus.OK when successful', async () => {
+      const mockUser = { id: '1', email: 'test@example.com' };
+      const mockRequest = { user: mockUser } as unknown as IAuthorizedRequest;
+
+      (jwtAuthGuard.canActivate as jest.Mock).mockReturnValue(true);
+
+      const result = await authController.profile(mockRequest);
+
+      expect(result).toEqual(mockUser);
+      // Check if the @HttpCode decorator is applied correctly
+      const metadata = Reflect.getMetadata(
+        '__httpCode__',
+        AuthController.prototype.profile,
+      );
+      expect(metadata).toBe(HttpStatus.OK);
     });
   });
 });
