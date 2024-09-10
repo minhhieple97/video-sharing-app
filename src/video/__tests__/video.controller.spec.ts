@@ -1,14 +1,18 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { Test, TestingModule } from '@nestjs/testing';
-import { VideoService } from './video.service';
-import { ShareVideoDto } from './dto/share-video.dto';
+// import { VideoService } from './video.service';
+// import { ShareVideoDto } from './dto/share-video.dto';
 import { JwtModule } from '@nestjs/jwt';
 
-import { VideoModule } from './video.module';
+// import { VideoModule } from './video.module';
 import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from 'src/auth/auth.module';
-import { VideoController } from './video.controller';
+// import { VideoController } from './video.controller';
 import { IAuthorizedRequest } from 'src/auth/interfaces';
+import { VideoController } from '../video.controller';
+import { VideoService } from '../video.service';
+import { VideoModule } from '../video.module';
+import { ShareVideoDto } from '../dto/share-video.dto';
 
 describe('VideoController (unit)', () => {
   let videoController: VideoController;

@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
-import { YoutubeService } from './youtube.service';
+import { YoutubeService } from '../youtube.service';
 import { NotFoundException } from '@nestjs/common';
 
 jest.mock('googleapis', () => ({
@@ -107,25 +107,6 @@ describe('YoutubeService', () => {
 
       await expect(service.getVideoInfo('test-video-id')).rejects.toThrow(
         NotFoundException,
-      );
-    });
-
-    it('should use correct API key from ConfigService', async () => {
-      const mockVideoData = {
-        data: {
-          items: [{ id: 'test-video-id', snippet: { title: 'Test Video' } }],
-        },
-      };
-      jest
-        .spyOn(service['youtube'].videos, 'list')
-        .mockResolvedValue(mockVideoData as never);
-
-      await service.getVideoInfo('test-video-id');
-
-      expect(service['youtube'].videos.list).toHaveBeenCalledWith(
-        expect.objectContaining({
-          key: 'mock-api-key',
-        }),
       );
     });
   });

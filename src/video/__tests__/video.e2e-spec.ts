@@ -1,18 +1,22 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { Test, TestingModule } from '@nestjs/testing';
-import { VideoService } from './video.service';
-import { ShareVideoDto } from './dto/share-video.dto';
+// import { VideoService } from './video.service';
+// import { ShareVideoDto } from './dto/share-video.dto';
 import * as argon2 from 'argon2';
 import { JwtService } from '@nestjs/jwt';
 import { HttpStatus, INestApplication, ValidationPipe } from '@nestjs/common';
 import * as request from 'supertest';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { AuthService } from 'src/auth/auth.service';
-import { VideoModule } from './video.module';
+// import { VideoModule } from './video.module';
 import { ConfigModule } from '@nestjs/config';
 import { User } from '@prisma/client';
 import { AuthModule } from 'src/auth/auth.module';
-import { GetVideosDto } from './dto/get-videos.dto';
+import { VideoService } from '../video.service';
+import { VideoModule } from '../video.module';
+import { ShareVideoDto } from '../dto/share-video.dto';
+import { GetVideosDto } from '../dto/get-videos.dto';
+// import { GetVideosDto } from './dto/get-videos.dto';
 
 describe('VideoController (integration)', () => {
   let app: INestApplication;

@@ -1,14 +1,14 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { Test, TestingModule } from '@nestjs/testing';
-import { VideoService } from './video.service';
-import { PrismaService } from '../prisma/prisma.service';
+import { VideoService } from '../video.service';
+import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationGateway } from 'src/notification/notification.gateway';
 import { YoutubeService } from 'src/youtube/youtube.service';
 import { RedisService } from 'src/redis/redis.service';
 import { BadRequestException } from '@nestjs/common';
-import * as helper from '../helper';
+import * as helper from '../../helper';
 
-jest.mock('../helper', () => ({
+jest.mock('../../helper', () => ({
   checkValidYoutubeLink: jest.fn(),
   getYoutubeVideoId: jest.fn(),
 }));
