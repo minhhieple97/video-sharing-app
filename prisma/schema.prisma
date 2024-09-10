@@ -1,9 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider      = "prisma-client-js"
   binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
@@ -15,26 +12,50 @@ datasource db {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
+  id        Int       @id @default(autoincrement())
+  email     String    @unique
   password  String
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @default(now()) @map("updated_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @default(now()) @map("updated_at")
   videos    Video[]
+  comments  Comment[]
 
   @@map("users")
 }
 
 model Video {
-  id        Int      @id @default(autoincrement())
-  youtubeId String   @map("youtube_id")
-  title     String   @map("title") @db.Text 
-  sharedBy  Int      @map("shared_by")
-  sharedAt  DateTime @default(now()) @map("shared_at")
-  user      User     @relation(fields: [sharedBy], references: [id])
+  id        Int       @id @default(autoincrement())
+  youtubeId String    @map("youtube_id")
+  title     String    @map("title") @db.Text 
+  sharedBy  Int       @map("shared_by")
+  sharedAt  DateTime  @default(now()) @map("shared_at")
+  user      User      @relation(fields: [sharedBy], references: [id])
+  comments  Comment[]
 
   @@index([youtubeId])
   @@index([sharedBy])
   @@index([sharedAt])
   @@map("videos")
+}
+
+model Comment {
+  id        Int       @id @default(autoincrement())
+  content   String    @db.Text
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  userId    Int       @map("user_id")
+  videoId   Int       @map("video_id")
+  parentId  Int?      @map("parent_id")
+  
+  user      User      @relation(fields: [userId], references: [id])
+  video     Video     @relation(fields: [videoId], references: [id])
+  parent    Comment?  @relation("CommentReplies", fields: [parentId], references: [id])
+  replies   Comment[] @relation("CommentReplies")
+  isDeleted Boolean   @default(false) @map("is_deleted")
+
+  @@index([userId])
+  @@index([videoId])
+  @@index([parentId])
+  @@index([isDeleted])
+  @@map("comments")
 }

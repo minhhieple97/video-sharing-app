@@ -6,6 +6,7 @@ import { AppService } from './app.service';
 import { VideoModule } from './video/video.module';
 import { NotificationModule } from './notification/notification.module';
 import { ConfigModule } from '@nestjs/config';
+import { CommentsModule } from './comment/comments.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -16,6 +17,7 @@ import { ConfigModule } from '@nestjs/config';
     AuthModule,
     VideoModule,
     NotificationModule,
+    CommentsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
